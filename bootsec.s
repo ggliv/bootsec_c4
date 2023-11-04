@@ -9,15 +9,11 @@
 ; di: destination index
 
 [org 0x7c00] ; bios program offset
+[bits 16] ; use 16 bit real mode
 
 call .cls
-mov bx, .str
-
-.loop:
-  mov ah, 0       ; set routine indicator
-  int 0x16        ; wait for keyboard input
-  call .print_str ; print the string
-  jmp .loop       ; loop
+mov dx, 0x0000
+call .draw_board
 
 jmp $ ; infinite loop
 
@@ -25,31 +21,20 @@ jmp $ ; infinite loop
 ; Data/functions
 ;
 
-; Print the char stored in al
-.print_char:
-  pusha
-  mov ah, 0x0e ; set routine to tty
-  int 0x10     ; call print interrupt
-  popa
-  ret
-
-
-; Print the null-terminated string at memory location [bx]
+; Print the null-terminated string at [si]
 .print_str:
-  pusha
-  push bx
-  ; while [bx] != \0: print_char [bx]
+  push si
   .while:
-    mov al, [bx]
-    cmp al, 0
-    je .done
-    call .print_char
-    inc bx
-    jmp .while
+    lodsb
+    or al, al ; are we at a null char?
+    jz .done; ; yes, break
+
+    mov ah, 0x0e   ; set routine to tty
+    int 0x10   ; raise print interrupt
+    jmp .while ; continue w next char
 
   .done:
-    pop bx
-    popa
+    pop si
     ret
 
 
@@ -58,11 +43,59 @@ jmp $ ; infinite loop
 .mov_cur:
   ; preserve state
   pusha
-  push bx
   mov ah, 0x02 ; "get cursor data" process
   int 0x10     ; screen function int
   ; restore state
-  pop bx
+  popa
+  ret
+
+
+; dh = row
+; dl = col
+.draw_board:
+  pusha
+  call .mov_cur ; move cursor to correct spot
+  mov si, .top_line ; print top bar
+  call .print_str
+  add dx, 0x0100 ; go to next line
+  call .mov_cur
+  mov si, .int_blank
+  call .print_str ; print internal blank line
+
+  mov cx, 5 ; loop 5 times
+  .loop:
+    add dx, 0x0100 ; go to next line
+    call .mov_cur
+
+    mov si, .int_blank
+    call .print_str ; print internal blank line
+
+    add dx, 0x0100 ; go to next line
+    call .mov_cur
+
+    mov si, .int_border ; print internal border line
+    call .print_str
+
+    add dx, 0x0100 ; go to next line
+    call .mov_cur
+
+    mov si, .int_blank
+    call .print_str ; print internal blank line
+
+    loop .loop
+
+  add dx, 0x0100 ; go to next line
+  call .mov_cur
+
+  mov si, .int_blank
+  call .print_str ; print internal blank line
+
+  add dx, 0x0100 ; go to next line
+  call .mov_cur
+
+  mov si, .btm_line ; print top bar
+  call .print_str
+
   popa
   ret
 
@@ -72,26 +105,27 @@ jmp $ ; infinite loop
 
   ; go through each cell on screen and blank it out
   mov cx, 0x07d0
-  .clear:
-    mov al, 0
-    call .print_char
-    loop .clear
+  mov si, .space
 
-  ; move cursor to start
-  push dx
-  mov dx, 0x0000
-  call .mov_cur
-  pop dx
+  .clear:
+    call .print_str
+    loop .clear
 
   popa
   ret
 
 
-.str:
- ; backtick for escape sequences
- db `Hello world!\n`,0
+.space:
+  db " ",0
+.top_line:
+  db 0xc9,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xbb,0
+.int_blank:
+  db 0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0x20,0x20,0x20,0x20,0x20,0xba,0
+.int_border:
+  db 0xcc,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xce,0xcd,0xcd,0xcd,0xcd,0xcd,0xb9,0
+.btm_line:
+  db 0xc8,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xca,0xcd,0xcd,0xcd,0xcd,0xcd,0xbc,0
 
 
 times 510-($-$$) db 0 ; pad with zeros
-
 dw 0xaa55 ; boot sector magic number
