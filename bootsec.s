@@ -17,6 +17,24 @@ int 0x10       ; raise video interrupt
 mov dx, 0x0514
 call .draw_board
 
+handle_input:
+  mov ah, 0x00
+  int 0x16            ; wait for keyboard input
+
+  cmp ah, 0x39        ; space pressed?
+  jnz left            ; no, check for directions
+  call drop_token     ; yes, drop token
+  jmp handle_input    ; done, wait for more input
+
+  left: cmp ah, 0x4b  ; left arrow pressed?
+  jnz right           ; no, check for right
+  call move_left      ; yes, move the cursor
+  jmp handle_input    ; done, wait for more input
+
+  right: cmp ah, 0x4d ; right arrow pressed?
+  jnz handle_input    ; no, wait for more input
+  call move_right     ; yes, move the cursor
+
 .echo:
   mov ah, 0x00
   int 0x16
@@ -30,6 +48,18 @@ jmp $ ; infinite loop
 ;
 ; Data/functions
 ;
+
+; Drop a token in the currently selected column
+drop_token:
+  hlt
+
+; Move the drop cursor right
+move_right:
+  hlt
+
+; Move the drop cursor left
+move_left:
+  hlt
 
 ; Print the null-terminated string at [si]
 .print_str:
