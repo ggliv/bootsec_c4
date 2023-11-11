@@ -17,6 +17,14 @@ int 0x10       ; raise video interrupt
 mov dx, 0x0514
 call .draw_board
 
+.echo:
+  mov ah, 0x00
+  int 0x16
+  mov ah, 0x0e
+  int 0x10
+  jmp .echo
+
+
 jmp $ ; infinite loop
 
 ;
