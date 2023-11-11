@@ -14,7 +14,7 @@
 mov ax, 0x0003 ; set video mode to 80x25 16-color text
 int 0x10       ; raise video interrupt
 
-mov dx, 0x0000
+mov dx, 0x0514
 call .draw_board
 
 jmp $ ; infinite loop
