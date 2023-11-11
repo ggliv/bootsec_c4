@@ -34,13 +34,14 @@ handle_input:
   right: cmp ah, 0x4d ; right arrow pressed?
   jnz handle_input    ; no, wait for more input
   call move_right     ; yes, move the cursor
+  jmp handle_input    ; done, wait for more input
 
-.echo:
+echo:
   mov ah, 0x00
   int 0x16
   mov ah, 0x0e
   int 0x10
-  jmp .echo
+  jmp echo
 
 
 jmp $                 ; infinite loop
@@ -51,15 +52,15 @@ jmp $                 ; infinite loop
 
 ; Drop a token in the currently selected column
 drop_token:
-  hlt
+  ret
 
 ; Move the drop cursor right
 move_right:
-  hlt
+  ret
 
 ; Move the drop cursor left
 move_left:
-  hlt
+  ret
 
 ; Print the null-terminated string at [si]
 print_str:
