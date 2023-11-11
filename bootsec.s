@@ -11,7 +11,9 @@
 [org 0x7c00] ; bios program offset
 [bits 16] ; use 16 bit real mode
 
-call .cls
+mov ax, 0x0003 ; set video mode to 80x25 16-color text
+int 0x10       ; raise video interrupt
+
 mov dx, 0x0000
 call .draw_board
 
@@ -95,21 +97,6 @@ jmp $ ; infinite loop
 
   mov si, .btm_line ; print top bar
   call .print_str
-
-  popa
-  ret
-
-
-.cls:
-  pusha
-
-  ; go through each cell on screen and blank it out
-  mov cx, 0x07d0
-  mov si, .space
-
-  .clear:
-    call .print_str
-    loop .clear
 
   popa
   ret
