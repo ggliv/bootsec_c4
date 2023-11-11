@@ -8,33 +8,33 @@
 ; si: source index
 ; di: destination index
 
-[org 0x7c00]          ; bios program offset
-[bits 16]             ; use 16 bit real mode
+[org 0x7c00]           ; bios program offset
+[bits 16]              ; use 16 bit real mode
 
-mov ax, 0x0003        ; set video mode to 80x25 16-color text
-int 0x10              ; raise video interrupt
+mov ax, 0x0003         ; set video mode to 80x25 16-color text
+int 0x10               ; raise video interrupt
 
-mov dx, 0x0514
-call draw_board       ; draw at 4,20
+mov dx, [board_origin]
+call draw_board        ; draw at 5,19
 
 handle_input:
   mov ah, 0x00
-  int 0x16            ; wait for keyboard input
+  int 0x16             ; wait for keyboard input
 
-  cmp ah, 0x39        ; space pressed?
-  jnz left            ; no, check for directions
-  call drop_token     ; yes, drop token
-  jmp handle_input    ; done, wait for more input
+  cmp ah, 0x39         ; space pressed?
+  jnz left             ; no, check for directions
+  call drop_token      ; yes, drop token
+  jmp handle_input     ; done, wait for more input
 
-  left: cmp ah, 0x4b  ; left arrow pressed?
-  jnz right           ; no, check for right
-  call move_left      ; yes, move the cursor
-  jmp handle_input    ; done, wait for more input
+  left: cmp ah, 0x4b   ; left arrow pressed?
+  jnz right            ; no, check for right
+  call move_left       ; yes, move the cursor
+  jmp handle_input     ; done, wait for more input
 
-  right: cmp ah, 0x4d ; right arrow pressed?
-  jnz handle_input    ; no, wait for more input
-  call move_right     ; yes, move the cursor
-  jmp handle_input    ; done, wait for more input
+  right: cmp ah, 0x4d  ; right arrow pressed?
+  jnz handle_input     ; no, wait for more input
+  call move_right      ; yes, move the cursor
+  jmp handle_input     ; done, wait for more input
 
 echo:
   mov ah, 0x00
@@ -44,12 +44,22 @@ echo:
   jmp echo
 
 
-jmp $                 ; infinite loop
+jmp $                  ; infinite loop
 
 
 ;
 ; Variables/data
 ;
+
+board_origin dw 0x0513
+col_sel  db 0x00 ; currently selected column
+col0_top db 0x00 ; next row for column 0
+col1_top db 0x00 ; next row for column 1
+col2_top db 0x00 ; next row for column 2
+col3_top db 0x00 ; next row for column 3
+col4_top db 0x00 ; next row for column 4
+col5_top db 0x00 ; next row for column 5
+col6_top db 0x00 ; next row for column 6
 
 top_line:
   db 0xc9,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xcb,0xcd,0xcd,0xcd,0xcd,0xcd,0xbb,0
@@ -69,12 +79,12 @@ btm_line:
 drop_token:
   ret
 
-; Move the drop cursor right
-move_right:
-  ret
-
 ; Move the drop cursor left
 move_left:
+  ret
+
+; Move the drop cursor right
+move_right:
   ret
 
 ; Print the null-terminated string at [si]
