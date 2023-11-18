@@ -25,7 +25,7 @@ call move_dropsel
 
 handle_input:
   mov dx, 0x0000
-  ;call mov_cur         ; reset cursor position to top left corner
+  call mov_cur         ; reset cursor position to top left corner
 
   mov ah, 0x00
   int 0x16             ; wait for keyboard input
