@@ -1,8 +1,8 @@
-OUT = bootsec.bin
+OUT = connect_four.bin
 AS = nasm
 FLAGS = -o $@
 
-$(OUT): bootsec.s
+$(OUT): connect_four.asm
 	$(AS) $(FLAGS) $<
 
 clean:
