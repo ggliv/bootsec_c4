@@ -10,6 +10,8 @@
 
 %define board_origin 0x0513
 %define cols 7
+%define p1 4
+%define p2 14
 
 [org 0x7c00]           ; bios program offset
 [bits 16]              ; use 16 bit real mode
@@ -22,6 +24,9 @@ call draw_board        ; draw board
 call move_dropsel
 
 handle_input:
+  mov dx, 0x0000
+  ;call mov_cur         ; reset cursor position to top left corner
+
   mov ah, 0x00
   int 0x16             ; wait for keyboard input
 
@@ -56,13 +61,7 @@ jmp $                  ; infinite loop
 ;
 
 col_sel  db 0x00 ; currently selected column
-col0_top db 0x00 ; next row for column 0
-col1_top db 0x00 ; next row for column 1
-col2_top db 0x00 ; next row for column 2
-col3_top db 0x00 ; next row for column 3
-col4_top db 0x00 ; next row for column 4
-col5_top db 0x00 ; next row for column 5
-col6_top db 0x00 ; next row for column 6
+col_tops db 0x00,0x00,0x00,0x00,0x00,0x00,0x00 ; how many tokens have been dropped in each column?
 
 blank:
   db " ",0
@@ -85,6 +84,41 @@ btm_line:
 
 ; Drop a token in the currently selected column
 drop_token:
+  ; get row position
+  mov di, [col_sel]
+  shl di, 8
+  shr di, 8
+  add di, col_tops
+  ; di is now the address of the top variable for the selected col
+
+  cmp byte [di], 6
+  je .done ; if column is already full, don't do anything
+
+  mov dx, board_origin + 0x1102
+
+  ; set row position
+  mov ax, 3
+  mul byte [di]
+  sub dh, al
+
+  ; set column position
+  mov al, 6
+  mul byte [col_sel]
+  add dl, al
+
+  call mov_cur
+  mov ax, 0x09db ; process : char
+  mov bh, 0x00   ; page
+  mov bl, p1     ; attribute/color
+  mov cx, 3      ; count
+  int 0x10
+  dec dh
+  call mov_cur
+  int 0x10
+
+  inc byte [di]
+
+.done:
   ret
 
 ; Move the drop cursor left
