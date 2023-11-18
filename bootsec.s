@@ -45,14 +45,6 @@ handle_input:
   call move_right      ; yes, move the cursor
   jmp handle_input     ; done, wait for more input
 
-echo:
-  mov ah, 0x00
-  int 0x16
-  mov ah, 0x0e
-  int 0x10
-  jmp echo
-
-
 jmp $                  ; infinite loop
 
 
