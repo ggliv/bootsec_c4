@@ -52,6 +52,7 @@ jmp $                  ; infinite loop
 ; Variables/data
 ;
 
+next_color db p1 ; the color the next token should have (defaults to p1's color)
 col_sel  db 0x00 ; currently selected column
 col_tops db 0x00,0x00,0x00,0x00,0x00,0x00,0x00 ; how many tokens have been dropped in each column?
 
@@ -101,7 +102,7 @@ drop_token:
   call mov_cur
   mov ax, 0x09db ; process : char
   mov bh, 0x00   ; page
-  mov bl, p1     ; attribute/color
+  mov bl, [next_color]     ; attribute/color
   mov cx, 3      ; count
   int 0x10
   dec dh
@@ -109,6 +110,13 @@ drop_token:
   int 0x10
 
   inc byte [di]
+
+  cmp byte [next_color], p2
+  je .set_p1
+  mov byte [next_color], p2
+  jmp .done
+.set_p1:
+  mov byte [next_color], p1
 
 .done:
   ret
