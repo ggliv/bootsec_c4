@@ -16,6 +16,16 @@
 [org 0x7c00]           ; bios program offset
 [bits 16]              ; use 16 bit real mode
 
+start:
+; reset impactful variables to default values
+mov byte [next_color], p1
+mov di, col_tops
+.clear_tops:
+  mov byte [di], 0x00
+  inc di
+  cmp di, col_tops + 7
+  jne .clear_tops
+
 mov ax, 0x0003         ; set video mode to 80x25 16-color text
 int 0x10               ; raise video interrupt
 
@@ -41,9 +51,12 @@ handle_input:
   jmp handle_input     ; done, wait for more input
 
   right: cmp ah, 0x4d  ; right arrow pressed?
-  jne handle_input     ; no, wait for more input
+  jne reset            ; no, check for escape
   call move_right      ; yes, move the cursor
-  jmp handle_input     ; done, wait for more input
+
+  reset: cmp ah, 0x01  ; escape pressed?
+  jne handle_input     ; no, wait for more input
+  jmp start            ; yes, restart the program
 
 jmp $                  ; infinite loop
 
@@ -52,7 +65,7 @@ jmp $                  ; infinite loop
 ; Variables/data
 ;
 
-next_color db p1 ; the color the next token should have (defaults to p1's color)
+next_color db 0x00 ; the color the next token should have
 col_sel  db 0x00 ; currently selected column
 col_tops db 0x00,0x00,0x00,0x00,0x00,0x00,0x00 ; how many tokens have been dropped in each column?
 
