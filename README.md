@@ -1,4 +1,6 @@
 # bootsec_c4
+![demo of connect four gameplay](https://raw.githubusercontent.com/ggliv/bootsec_c4/main/demo.gif)
+
 Connect Four written in x86 real mode assembly, made to fit into a 512-byte BIOS boot sector.
 
 ## Build + Run
